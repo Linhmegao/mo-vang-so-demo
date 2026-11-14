@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thanh toán · Mỏ Vàng Số</title>
+<style>
+:root{--bg:#faf6ee;--card:#fff;--tx:#2b2a26;--mu:#7a7566;--gold:#b8860b;--ln:#e8e0cc;--ok:#1d7a46;--er:#b3261e}
+@media(prefers-color-scheme:dark){:root{--bg:#1d1b16;--card:#27241d;--tx:#f1ecdf;--mu:#a59f8c;--gold:#e0b341;--ln:#3a352a;--ok:#5fd08a;--er:#ff8a80}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.55 system-ui,sans-serif}
+.w{max-width:480px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:8px 0 2px;color:var(--gold)}.sub{color:var(--mu);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:16px;margin-bottom:14px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:4px 0}.row b{font-weight:600}
+label{display:block;font-size:14px;color:var(--mu);margin:12px 0 4px}
+input{width:100%;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--ln);border-radius:10px;padding:11px 12px}
+button{width:100%;margin-top:16px;font:inherit;font-weight:600;color:#fff;background:var(--gold);border:0;border-radius:10px;padding:13px;cursor:pointer}
+button:disabled{opacity:.6}.s{display:none}.s.on{display:block}
+.qr{display:block;margin:8px auto;max-width:260px;width:100%;border-radius:10px;background:#fff}
+.code{font:700 22px/1.2 ui-monospace,monospace;text-align:center;letter-spacing:1px;padding:10px;border:1px dashed var(--gold);border-radius:10px;margin:8px 0}
+.note{font-size:14px;color:var(--mu)}.err{color:var(--er)}.ok{color:var(--ok)}
+.link{display:inline-block;margin-top:10px;color:var(--gold);font-weight:600}
+</style></head><body><div class="w">
+<h1>Mỏ Vàng Số</h1><p class="sub" id="sp"></p>
+
+<div class="s on" id="s1"><div class="card">
+ <div class="row"><span>Sản phẩm</span><b id="pn"></b></div>
+ <div class="row"><span>Số tiền</span><b id="pa"></b></div></div>
+ <form class="card" id="f" autocomplete="on">
+  <label for="n">Họ và tên</label><input id="n" required maxlength="80" autocomplete="name">
+  <label for="z">Số Zalo</label><input id="z" required maxlength="15" inputmode="tel" autocomplete="tel" placeholder="Ví dụ 0901234567">
+  <label for="m">Email</label><input id="m" type="email" required maxlength="100" autocomplete="email" placeholder="ten@email.com">
+  <button id="b" type="submit">Tiếp tục thanh toán</button>
+  <p class="note" id="e1"></p></form></div>
+
+<div class="s" id="s2"><div class="card">
+ <p style="margin-top:0">Quét mã bằng app ngân hàng. Nội dung chuyển khoản đã điền sẵn, bạn <b>đừng sửa</b>:</p>
+ <img class="qr" id="qr" alt="Mã QR thanh toán"><div class="code" id="cd"></div>
+ <div class="row"><span>Số tiền</span><b id="pa2"></b></div>
+ <p class="note" id="st">Đang chờ thanh toán… trang sẽ tự cập nhật khi nhận được tiền.</p>
+ <p class="note">Nếu bạn chuyển tay: nhập đúng số tiền và nội dung <b id="cd2"></b>.</p></div></div>
+
+<div class="s" id="s3"><div class="card"><h2 class="ok" style="margin-top:0">Đã nhận thanh toán 💛</h2>
+ <p>Cảm ơn bạn. Linh sẽ nhắn Zalo cho bạn trong vòng 24 giờ để mời vào nhóm và gửi lịch Zoom.</p>
+ <p class="note">Mã đơn của bạn: <b id="cd3"></b>. Nếu cần gấp, nhắn Linh qua Zalo:</p>
+ <a class="link" id="zl" target="_blank" rel="noopener">Nhắn Linh trên Zalo</a></div></div>
+
+<div class="s" id="s4"><div class="card"><h2 class="err" style="margin-top:0">Chưa tạo được đơn</h2>
+ <p>Hệ thống đang gặp trục trặc, bạn chưa bị trừ tiền. Bạn nhắn Linh qua Zalo, Linh hỗ trợ ngay nhé.</p>
+ <a class="link" id="zl2" target="_blank" rel="noopener">Nhắn Linh trên Zalo</a></div></div>
+
+<p class="note" id="ft"></p>
+</div>
+<script>
+// ===== CHỈ SỬA 2 DÒNG NÀY (lấy trong Sepay: Tạo QR) =====
+var BANK_ID='ACB';
+var ACC_NO ='448357';
+// =========================================================
+var APPS='https://script.google.com/macros/s/AKfycbz63tEEBrtVg5tFFqsMoTRMe0GVHtAJFCE_tKBpIw2N4Wd8wANlyrjzg5Khi68Lgi-I/exec';
+var ZALO='https://zalo.me/0377972337';
+var test=/[?&]test=1/.test(location.search);
+var P=test?{ten:'Test 2000đ',gia:2000}:{ten:'Mỏ Vàng Số · 21 ngày',gia:999000};
+var $=function(i){return document.getElementById(i)};
+var vnd=function(n){return n.toLocaleString('vi-VN')+'đ'};
+$('pn').textContent=P.ten;$('pa').textContent=$('pa2').textContent=vnd(P.gia);
+$('zl').href=$('zl2').href=ZALO;
+$('sp').textContent=test?'Chế độ thử (2.000đ)':'Thanh toán an toàn bằng chuyển khoản';
+function show(id){['s1','s2','s3','s4'].forEach(function(x){$(x).classList.toggle('on',x===id)});window.scrollTo(0,0)}
+function maDon(){var a=new Uint32Array(1);crypto.getRandomValues(a);return 'MV'+String(a[0]%1000000).padStart(6,'0')}
+function status(ma){return fetch(APPS+'?loai=trangthai&ma='+ma).then(function(r){return r.json()}).then(function(j){return j.status}).catch(function(){return 'err'})}
+function wait(fn,ms,tries){return new Promise(function(res){var i=0;(function t(){fn().then(function(v){if(v||++i>=tries)res(v);else setTimeout(t,ms)})})()})}
+$('f').onsubmit=function(e){e.preventDefault();
+ if(/DIEN-/.test(BANK_ID+ACC_NO)){$('e1').textContent='Trang chưa được cấu hình tài khoản nhận tiền.';$('e1').className='note err';return}
+ var sdt=$('z').value.replace(/[\s.\-]/g,''),mail=$('m').value.trim();
+ if(!/^0\d{9,10}$/.test(sdt)){$('e1').textContent='Số Zalo chưa đúng (10–11 số, bắt đầu bằng 0).';$('e1').className='note err';return}
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)){$('e1').textContent='Email chưa đúng, bạn kiểm tra lại giúp nhé.';$('e1').className='note err';return}
+ $('e1').textContent='';
+ var ma=maDon(),b=$('b');b.disabled=true;b.textContent='Đang tạo đơn…';
+ fetch(APPS,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+  body:new URLSearchParams({loai:'donhang',ma:ma,ho_ten:$('n').value,zalo_sdt:sdt,email:mail,san_pham:P.ten,so_tien:P.gia}).toString()}).catch(function(){});
+ // xác nhận đơn đã được tạo (pending) trước khi cho chuyển tiền
+ wait(function(){return status(ma).then(function(s){return s==='pending'||s==='success'?s:''})},1500,10).then(function(s){
+  if(!s){show('s4');return}
+  $('cd').textContent=$('cd2').textContent=$('cd3').textContent=ma;
+  $('qr').src='https://qr.sepay.vn/img?acc='+encodeURIComponent(ACC_NO)+'&bank='+encodeURIComponent(BANK_ID)+'&amount='+P.gia+'&des='+ma;
+  show('s2');
+  var n=0;(function poll(){status(ma).then(function(s){
+    if(s==='success'){show('s3');return}
+    if(++n<225)setTimeout(poll,4000);else{$('st').textContent='Chưa thấy thanh toán. Nếu bạn đã chuyển, cứ yên tâm, Linh sẽ đối chiếu và nhắn bạn qua Zalo.'}
+  })})();
+ });
+};
+</script></body></html>
