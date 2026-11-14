@@ -1,0 +1,50 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Admin · Mỏ Vàng Số</title>
+<style>
+:root{--bg:#faf6ee;--card:#fff;--tx:#2b2a26;--mu:#7a7566;--gold:#b8860b;--ln:#e8e0cc;--ok:#1d7a46;--wait:#b26a00}
+@media(prefers-color-scheme:dark){:root{--bg:#1d1b16;--card:#27241d;--tx:#f1ecdf;--mu:#a59f8c;--gold:#e0b341;--ln:#3a352a;--ok:#5fd08a;--wait:#f0b25a}}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,sans-serif}.w{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:8px 0 4px;color:var(--gold)}.sub{color:var(--mu);font-size:13px;margin-bottom:14px}
+button,input{font:inherit;color:var(--tx)}
+.tab{background:var(--card);border:1px solid var(--ln);border-radius:20px;padding:6px 14px;cursor:pointer;margin:0 6px 8px 0}.tab.on{background:var(--gold);color:#fff;border-color:var(--gold)}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:12px;overflow-x:auto;margin-bottom:14px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--ln);vertical-align:top}th{color:var(--mu);font-size:13px}
+.b{padding:2px 10px;border-radius:12px;font-size:12px;border:1px solid currentColor}.success{color:var(--ok)}.pending{color:var(--wait)}
+input{background:var(--card);border:1px solid var(--ln);border-radius:8px;padding:8px 10px;width:min(100%,320px)}
+.go{background:var(--gold);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer}.sm{padding:4px 10px;font-size:13px}
+.sum{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}.sum div{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:8px 14px}.sum b{display:block;font-size:20px}
+.note{color:var(--mu);font-size:13px}#app{display:none}
+</style></head><body><div class="w">
+<h1>Admin · Mỏ Vàng Số</h1><div class="sub">Dữ liệu thật, chỉ xem được sau khi nhập mật khẩu. Số Zalo được ẩn bớt.</div>
+<div class="card" id="login"><p style="margin-top:0">Nhập mật khẩu admin để xem dữ liệu.</p>
+<input id="k" type="password" placeholder="Mật khẩu admin" autocomplete="current-password"> <button class="go" id="go">Vào</button> <span class="note" id="msg"></span></div>
+<div id="app"><div class="sum" id="sum"></div>
+<div><button class="tab on" data-t="orders">Đơn hàng</button><button class="tab" data-t="customers">Khách hàng</button><button class="tab" data-t="products">Sản phẩm</button><button class="tab" data-t="unmatched">Giao dịch chưa khớp</button><button class="tab" id="rl">↻ Tải lại</button></div>
+<div class="card"><table id="tb"></table></div>
+<p class="note" id="hint"></p></div>
+</div>
+<script>
+var APPS='https://script.google.com/macros/s/AKfycbz63tEEBrtVg5tFFqsMoTRMe0GVHtAJFCE_tKBpIw2N4Wd8wANlyrjzg5Khi68Lgi-I/exec';
+var KEY='',D=null,tab='orders';
+var COLS={orders:[['ma_don','Mã đơn'],['thoi_gian','Thời gian'],['ho_ten','Họ tên'],['zalo','Zalo'],['san_pham','Sản phẩm'],['so_tien','Số tiền'],['trang_thai','Trạng thái'],['sepay_id','Mã GD Sepay'],['_act','']],
+customers:[['ho_ten','Họ tên'],['zalo','Zalo'],['dang_ky','Đăng ký'],['rao_can','Rào cản chính']],
+products:[['ten','Tên'],['gia','Giá'],['loai','Loại'],['ton_kho','Tồn kho']],
+unmatched:[['thoi_gian','Thời gian'],['sepay_id','Mã GD Sepay'],['so_tien','Số tiền']]};
+var $=function(i){return document.getElementById(i)};
+function fmt(k,v){if(v==null||v==='')return '';if(k==='so_tien'||k==='gia')return Number(v).toLocaleString('vi-VN')+'đ';return String(v)}
+function render(){var t=$('tb');t.textContent='';var h=document.createElement('tr');
+COLS[tab].forEach(function(c){var th=document.createElement('th');th.textContent=c[1];h.appendChild(th)});t.appendChild(h);
+D[tab].slice().reverse().forEach(function(r){var tr=document.createElement('tr');COLS[tab].forEach(function(c){var td=document.createElement('td');
+if(c[0]==='trang_thai'){var s=document.createElement('span');s.className='b '+r.trang_thai;s.textContent=r.trang_thai;td.appendChild(s)}
+else if(c[0]==='_act'){if(r.trang_thai==='pending'){var b=document.createElement('button');b.className='go sm';b.textContent='Xác nhận đã thanh toán';b.onclick=function(){xn(r)};td.appendChild(b)}}
+else td.textContent=fmt(c[0],r[c[0]]);tr.appendChild(td)});t.appendChild(tr)});
+var o=D.orders;$('sum').textContent='';[[D.customers.length,'Khách chờ'],[o.length,'Đơn'],[o.filter(function(x){return x.trang_thai==='pending'}).length,'Đang chờ'],[o.filter(function(x){return x.trang_thai==='success'}).length,'Đã thanh toán']].forEach(function(a){var d=document.createElement('div'),b=document.createElement('b');b.textContent=a[0];d.appendChild(b);d.appendChild(document.createTextNode(a[1]));$('sum').appendChild(d)});
+$('hint').textContent=tab==='orders'?'Khi khách chuyển tiền nhưng sai nội dung, đơn vẫn "pending": bạn đối chiếu sao kê rồi bấm "Xác nhận đã thanh toán".':tab==='unmatched'?'Các khoản tiền về mà không khớp đơn nào (đã ẩn nội dung chuyển khoản).':''}
+function load(){$('msg').textContent='Đang tải…';return fetch(APPS+'?loai=admin&mk='+encodeURIComponent(KEY)).then(function(r){return r.json()}).then(function(j){
+ if(!j.ok){$('msg').textContent='Sai mật khẩu.';KEY='';return}D=j;$('login').style.display='none';$('app').style.display='block';render()}).catch(function(){$('msg').textContent='Không tải được, thử lại sau.'})}
+function xn(r){if(!confirm('Xác nhận đơn '+r.ma_don+' ('+Number(r.so_tien).toLocaleString('vi-VN')+'đ) đã thanh toán?'))return;
+ fetch(APPS,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({loai:'adminxacnhan',mk:KEY,ma:r.ma_don}).toString()}).catch(function(){}).then(function(){setTimeout(load,1500)})}
+$('go').onclick=function(){KEY=$('k').value;if(KEY)load()};$('k').onkeydown=function(e){if(e.key==='Enter')$('go').click()};
+$('rl').onclick=function(){load()};
+document.querySelectorAll('.tab[data-t]').forEach(function(b){b.onclick=function(){document.querySelectorAll('.tab[data-t]').forEach(function(x){x.classList.remove('on')});b.classList.add('on');tab=b.dataset.t;render()}});
+</script></body></html>
