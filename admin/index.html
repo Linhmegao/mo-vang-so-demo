@@ -13,14 +13,17 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;bord
 input{background:var(--card);border:1px solid var(--ln);border-radius:8px;padding:8px 10px;width:min(100%,320px)}
 .go{background:var(--gold);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer}.sm{padding:4px 10px;font-size:13px}
 .sum{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}.sum div{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:8px 14px}.sum b{display:block;font-size:20px}
-.note{color:var(--mu);font-size:13px}#app{display:none}
+.note{color:var(--mu);font-size:13px}#app{display:none}select{font:inherit;background:var(--card);color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:8px 10px;max-width:100%}
 </style></head><body><div class="w">
 <h1>Admin · Mỏ Vàng Số</h1><div class="sub">Dữ liệu thật, chỉ xem được sau khi nhập mật khẩu. Số Zalo được ẩn bớt.</div>
 <div class="card" id="login"><p style="margin-top:0">Nhập mật khẩu admin để xem dữ liệu.</p>
 <input id="k" type="password" placeholder="Mật khẩu admin" autocomplete="current-password"> <button class="go" id="go">Vào</button> <span class="note" id="msg"></span></div>
 <div id="app"><div class="sum" id="sum"></div>
-<div><button class="tab on" data-t="orders">Đơn hàng</button><button class="tab" data-t="customers">Khách hàng</button><button class="tab" data-t="products">Sản phẩm</button><button class="tab" data-t="unmatched">Giao dịch chưa khớp</button><button class="tab" id="rl">↻ Tải lại</button></div>
-<div class="card"><table id="tb"></table></div>
+<div><button class="tab on" data-t="orders">Đơn hàng</button><button class="tab" data-t="customers">Khách hàng</button><button class="tab" data-t="products">Sản phẩm</button><button class="tab" data-t="unmatched">Giao dịch chưa khớp</button><button class="tab" data-t="them">Thêm đơn</button><button class="tab" id="rl">↻ Tải lại</button></div>
+<div class="card" id="tc"><table id="tb"></table></div>
+<div class="card" id="fm" style="display:none"><p style="margin-top:0">Thêm một đơn đã thanh toán (ví dụ khách chuyển tiền sai nội dung). Hệ thống ghi đơn là <b>success</b> và gửi email xác nhận cho khách.</p>
+<p><input id="f_ten" placeholder="Họ tên" autocomplete="off"></p><p><input id="f_sdt" placeholder="Số Zalo (VD 0901234567)" inputmode="tel" autocomplete="off"></p><p><input id="f_mail" type="email" placeholder="Email khách" autocomplete="off"></p>
+<p><select id="f_sp"></select></p><p><button class="go" id="f_go">Thêm đơn và gửi email xác nhận</button> <span class="note" id="f_msg"></span></p></div>
 <p class="note" id="hint"></p></div>
 </div>
 <script>
@@ -32,9 +35,9 @@ products:[['ten','Tên'],['gia','Giá'],['loai','Loại'],['ton_kho','Tồn kho'
 unmatched:[['thoi_gian','Thời gian'],['sepay_id','Mã GD Sepay'],['so_tien','Số tiền']]};
 var $=function(i){return document.getElementById(i)};
 function fmt(k,v){if(v==null||v==='')return '';if(k==='so_tien'||k==='gia')return Number(v).toLocaleString('vi-VN')+'đ';return String(v)}
-function render(){var t=$('tb');t.textContent='';var h=document.createElement('tr');
-COLS[tab].forEach(function(c){var th=document.createElement('th');th.textContent=c[1];h.appendChild(th)});t.appendChild(h);
-D[tab].slice().reverse().forEach(function(r){var tr=document.createElement('tr');COLS[tab].forEach(function(c){var td=document.createElement('td');
+function render(){$('tc').style.display=tab==='them'?'none':'block';$('fm').style.display=tab==='them'?'block':'none';if(tab==='them'){fillSp();$('hint').textContent='';if(!D)return}var t=$('tb');t.textContent='';var h=document.createElement('tr');
+(COLS[tab]||[]).forEach(function(c){var th=document.createElement('th');th.textContent=c[1];h.appendChild(th)});t.appendChild(h);
+(D[tab]||[]).slice().reverse().forEach(function(r){var tr=document.createElement('tr');COLS[tab].forEach(function(c){var td=document.createElement('td');
 if(c[0]==='trang_thai'){var s=document.createElement('span');s.className='b '+r.trang_thai;s.textContent=r.trang_thai;td.appendChild(s)}
 else if(c[0]==='_act'){if(r.trang_thai==='pending'){var b=document.createElement('button');b.className='go sm';b.textContent='Xác nhận đã thanh toán';b.onclick=function(){xn(r)};td.appendChild(b)}}
 else td.textContent=fmt(c[0],r[c[0]]);tr.appendChild(td)});t.appendChild(tr)});
@@ -42,6 +45,14 @@ var o=D.orders;$('sum').textContent='';[[D.customers.length,'Khách chờ'],[o.l
 $('hint').textContent=tab==='orders'?'Khi khách chuyển tiền nhưng sai nội dung, đơn vẫn "pending": bạn đối chiếu sao kê rồi bấm "Xác nhận đã thanh toán".':tab==='unmatched'?'Các khoản tiền về mà không khớp đơn nào (đã ẩn nội dung chuyển khoản).':''}
 function load(){$('msg').textContent='Đang tải…';return fetch(APPS+'?loai=admin&mk='+encodeURIComponent(KEY)).then(function(r){return r.json()}).then(function(j){
  if(!j.ok){$('msg').textContent='Sai mật khẩu.';KEY='';return}D=j;$('login').style.display='none';$('app').style.display='block';render()}).catch(function(){$('msg').textContent='Không tải được, thử lại sau.'})}
+function fillSp(){var s=$('f_sp');if(s.options.length||!D)return;D.products.forEach(function(p){var o=document.createElement('option');o.value=p.ten;o.textContent=p.ten+' · '+Number(p.gia).toLocaleString('vi-VN')+'đ';s.appendChild(o)})}
+$('f_go').onclick=function(){var ten=$('f_ten').value.trim(),sdt=$('f_sdt').value.replace(/[\s.\-]/g,''),mail=$('f_mail').value.trim(),m=$('f_msg');
+ if(!ten){m.textContent='Nhập họ tên.';return}if(!/^0\d{9,10}$/.test(sdt)){m.textContent='Số Zalo chưa đúng (10–11 số, bắt đầu bằng 0).';return}if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)){m.textContent='Email chưa đúng.';return}
+ if(!confirm('Thêm đơn "'+$('f_sp').value+'" cho '+ten+' và gửi email xác nhận tới '+mail+'?'))return;
+ m.textContent='Đang gửi…';$('f_go').disabled=true;
+ fetch(APPS,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({loai:'adminthemdon',mk:KEY,ho_ten:ten,zalo_sdt:sdt,email:mail,san_pham:$('f_sp').value}).toString()})
+ .then(function(r){return r.json()}).then(function(j){m.textContent=j.ok?('Đã thêm đơn '+j.ma+(j.mail?' và gửi email.':'. Chưa gửi được email, xem tab Email log trong Google Sheet.')):('Không thêm được ('+(j.loi||'sai mật khẩu')+').')},function(){m.textContent='Đã gửi lệnh. Bấm Tải lại, tab Đơn hàng để kiểm tra.'})
+ .then(function(){$('f_go').disabled=false;setTimeout(load,1500)})};
 function xn(r){if(!confirm('Xác nhận đơn '+r.ma_don+' ('+Number(r.so_tien).toLocaleString('vi-VN')+'đ) đã thanh toán?'))return;
  fetch(APPS,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({loai:'adminxacnhan',mk:KEY,ma:r.ma_don}).toString()}).catch(function(){}).then(function(){setTimeout(load,1500)})}
 $('go').onclick=function(){KEY=$('k').value;if(KEY)load()};$('k').onkeydown=function(e){if(e.key==='Enter')$('go').click()};
