@@ -56,6 +56,7 @@ var ACC_NO ='448357';
 var APPS='https://script.google.com/macros/s/AKfycbz63tEEBrtVg5tFFqsMoTRMe0GVHtAJFCE_tKBpIw2N4Wd8wANlyrjzg5Khi68Lgi-I/exec';
 var ZALO='https://zalo.me/0377972337';
 var test=/[?&]test=1/.test(location.search);
+function emailOk(m){m=String(m||'').trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(m))return false;var d=m.split('@')[1].toLowerCase();if(/^gmail\./.test(d)&&d!=='gmail.com')return false;return ['gmai.com','gmial.com','gmil.com','gmal.com','gmaill.com','gnail.com','gamil.com'].indexOf(d)<0}
 var P=test?{ten:'Test 2000đ',gia:2000}:{ten:'Mỏ Vàng Số · 21 ngày',gia:999000};
 var $=function(i){return document.getElementById(i)};
 var vnd=function(n){return n.toLocaleString('vi-VN')+'đ'};
@@ -70,7 +71,7 @@ $('f').onsubmit=function(e){e.preventDefault();
  if(/DIEN-/.test(BANK_ID+ACC_NO)){$('e1').textContent='Trang chưa được cấu hình tài khoản nhận tiền.';$('e1').className='note err';return}
  var sdt=$('z').value.replace(/[\s.\-]/g,''),mail=$('m').value.trim();
  if(!/^0\d{9,10}$/.test(sdt)){$('e1').textContent='Số Zalo chưa đúng (10–11 số, bắt đầu bằng 0).';$('e1').className='note err';return}
- if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)){$('e1').textContent='Email chưa đúng, bạn kiểm tra lại giúp nhé.';$('e1').className='note err';return}
+ if(!emailOk(mail)){$('e1').textContent='Email chưa đúng, bạn kiểm tra lại giúp nhé.';$('e1').className='note err';return}
  $('e1').textContent='';
  var ma=maDon(),b=$('b');b.disabled=true;b.textContent='Đang tạo đơn…';
  fetch(APPS,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},

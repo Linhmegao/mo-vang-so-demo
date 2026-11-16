@@ -917,6 +917,7 @@ document.querySelectorAll('a[href^="#"]').forEach(a=>{
 });
 
 // GỬI FORM QUA NETLIFY: gửi xong mới báo thành công, lỗi thì nhắc khách nhắn Zalo
+function emailOk(m){m=String(m||'').trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(m))return false;var d=m.split('@')[1].toLowerCase();if(/^gmail\./.test(d)&&d!=='gmail.com')return false;return ['gmai.com','gmial.com','gmil.com','gmal.com','gmaill.com','gnail.com','gamil.com'].indexOf(d)<0}
 document.querySelectorAll('form[name]').forEach(f => {
   f.addEventListener('submit', async e => {
     e.preventDefault();
@@ -927,6 +928,8 @@ document.querySelectorAll('form[name]').forEach(f => {
       const zap = f.dataset.zap;
       const tel = (new FormData(f).get('zalo_sdt') || '').toString().replace(/[\s.\-]/g, '');
       if (!/^0\d{9,10}$/.test(tel)) { throw new Error('bad phone'); }
+      const em = (new FormData(f).get('email') || '').toString().trim();
+      if (em && !emailOk(em)) { throw new Error('bad email'); }
       let ok = false;
       if (zap) { try { await fetch(zap, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: body, keepalive:true }); ok = true; } catch (_) {} }
       try { const r = await fetch('/', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: body }); if (r.ok) ok = true; } catch (_) {}
@@ -934,7 +937,7 @@ document.querySelectorAll('form[name]').forEach(f => {
       location.href = location.pathname + (f.dataset.next || '?submitted=1');
     } catch (err) {
       b.disabled = false; b.textContent = t;
-      alert(err && err.message === 'bad phone' ? 'Số điện thoại chưa đúng (10–11 số, bắt đầu bằng 0). Bạn kiểm tra lại giúp Linh nhé.' : 'Chưa gửi được thông tin. Bạn thử lại giúp Linh, hoặc nhắn Zalo 0377 972 337 nhé!');
+      alert(err && err.message === 'bad phone' ? 'Số điện thoại chưa đúng (10–11 số, bắt đầu bằng 0). Bạn kiểm tra lại giúp Linh nhé.' : err && err.message === 'bad email' ? 'Email chưa đúng, bạn kiểm tra lại giúp Linh nhé (ví dụ: ten@gmail.com).' : 'Chưa gửi được thông tin. Bạn thử lại giúp Linh, hoặc nhắn Zalo 0377 972 337 nhé!');
     }
   });
 });
